@@ -625,7 +625,7 @@ elif page == "🔍 Analyze News":
                 if saved_to_db:
                     st.success(f"Prediction completed and saved to MongoDB: {category}")
                 else:
-                    st.warning(f"Prediction completed: {category} ({db_result})")
+                    st.success(f"Prediction completed: {category}")
 
                 left, right = st.columns([1.15, 0.85])
 
