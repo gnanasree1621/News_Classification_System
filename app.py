@@ -703,8 +703,9 @@ elif page == "📊 Analytics":
 
     success, db_docs = db.get_predictions()
 
-   
-    if not db_docs:
+    if not success:
+        st.info("Analytics will be available when the database is connected.")
+    elif not db_docs:
         st.info("Analyze some news articles first to generate analytics.")
     else:
         analytics_data = [
@@ -778,8 +779,9 @@ elif page == "📜 History":
     )
 
     success, db_docs = db.get_predictions()
-
-    if not db_docs:
+    if not success:
+        st.info("Prediction history is temporarily unavailable.")
+    elif not db_docs:
         st.info("No predictions yet. Use Analyze News to create your first prediction.")
     else:
         history_rows = [
