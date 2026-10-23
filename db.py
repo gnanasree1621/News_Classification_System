@@ -38,7 +38,7 @@ def check_connection(timeout_ms=2000):
         client.admin.command('ping')
         return True, "MongoDB Connected"
     except (ServerSelectionTimeoutError, ConnectionFailure):
-        return False, f"MongoDB is not running or cannot be reached at {MONGODB_URI}."
+        return False, "MongoDB is unavailable. Check your connection settings."
     except Exception as e:
         return False, f"MongoDB connection error: {str(e)}"
 
