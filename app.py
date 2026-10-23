@@ -465,11 +465,13 @@ with st.sidebar:
         st.write(f"{ICONS[name]}  {name}")
 
     st.markdown("---")
-    db_connected, db_status_msg = db.check_connection(timeout_ms=1500)
+    db_connected, db_status_msg = db.check_connection(timeout_ms=3000)
     if db_connected:
         st.markdown("🟢 **MongoDB Connected**")
     else:
         st.markdown("🔴 **MongoDB Disconnected**")
+        with st.expander("Why?", expanded=False):
+            st.caption(db_status_msg)
     st.caption("Automated News Classifier • classification platform")
 
 
@@ -479,6 +481,7 @@ if page == "🏠 Dashboard":
     total_predictions = kpi_metrics["total_predictions"]
     latest_category = kpi_metrics["latest_category"]
     avg_confidence = kpi_metrics["avg_confidence"]
+    db_connected_for_kpi = kpi_metrics.get("db_connected", False)
 
     
 
@@ -562,6 +565,12 @@ if page == "🏠 Dashboard":
             args=("🔍 Analyze News",),
         )
 
+    if not db_connected_for_kpi:
+        st.info(
+            "📡 **MongoDB not connected** — KPI counts show 0. "
+            "Connect to MongoDB Atlas to persist and view analytics data."
+        )
+
     st.markdown(
         '<div class="footer">📰 Automated News Classifier • Analyze • Predict • Understand</div>',
         unsafe_allow_html=True,
@@ -623,9 +632,13 @@ elif page == "🔍 Analyze News":
                 st.session_state.last_result = record
 
                 if saved_to_db:
-                    st.success(f"Prediction completed and saved to MongoDB: {category}")
+                    st.success(f"✅ Prediction completed and saved to MongoDB: **{category}**")
                 else:
-                    st.success(f"Prediction completed: {category}")
+                    st.warning(
+                        f"⚠️ Prediction completed: **{category}** — "
+                        f"but the result could **not** be saved to MongoDB. "
+                        f"Reason: {db_result}"
+                    )
 
                 left, right = st.columns([1.15, 0.85])
 
@@ -704,9 +717,14 @@ elif page == "📊 Analytics":
     success, db_docs = db.get_predictions()
 
     if not success:
-        st.info("Analytics will be available when the database is connected.")
+        st.warning(
+            "📡 Analytics unavailable — could not connect to MongoDB Atlas. "
+            f"Details: {db_docs}"
+        )
+    elif not isinstance(db_docs, list):
+        st.error("Unexpected response from database. Please try refreshing the page.")
     elif not db_docs:
-        st.info("Analyze some news articles first to generate analytics.")
+        st.info("📊 No predictions yet. Use **Analyze News** to classify your first article.")
     else:
         analytics_data = [
             {
@@ -714,6 +732,7 @@ elif page == "📊 Analytics":
                 "Confidence": float(d.get("confidence", 0.0)),
             }
             for d in db_docs
+            if isinstance(d, dict)
         ]
         df = pd.DataFrame(analytics_data)
         counts = df["Category"].value_counts().reindex(list(CATEGORIES.values()), fill_value=0)
@@ -780,9 +799,14 @@ elif page == "📜 History":
 
     success, db_docs = db.get_predictions()
     if not success:
-        st.info("Prediction history is temporarily unavailable.")
+        st.warning(
+            "📡 History unavailable — could not connect to MongoDB Atlas. "
+            f"Details: {db_docs}"
+        )
+    elif not isinstance(db_docs, list):
+        st.error("Unexpected response from database. Please try refreshing the page.")
     elif not db_docs:
-        st.info("No predictions yet. Use Analyze News to create your first prediction.")
+        st.info("📜 No predictions yet. Use **Analyze News** to create your first prediction.")
     else:
         history_rows = [
             {
@@ -792,6 +816,7 @@ elif page == "📜 History":
                 "Date/Time": d.get("timestamp_str", ""),
             }
             for d in db_docs
+            if isinstance(d, dict)
         ]
         df = pd.DataFrame(history_rows)
         st.dataframe(df, use_container_width=True, hide_index=True)
