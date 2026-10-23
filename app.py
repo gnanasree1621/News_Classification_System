@@ -422,19 +422,44 @@ def predict_article(title, description):
         raise ValueError("Please enter meaningful news text.")
 
     vector = tfidf.transform([cleaned])
+
+    # predict() determines the category and is always run first.
     prediction = int(model.predict(vector)[0])
     category = CATEGORIES.get(prediction, "Unknown")
 
+    # predict_proba() is attempted separately.  If the loaded model's pickle
+    # was created with a different scikit-learn version than the one currently
+    # installed, predict_proba can raise an AttributeError on internal
+    # attributes (e.g. 'multi_class').  In that case the category returned by
+    # predict() is still valid and is preserved; only the confidence
+    # percentage and probability bar-chart are unavailable.
     probability_map = {}
+    confidence = 0.0
+
     if hasattr(model, "predict_proba"):
-        probabilities = model.predict_proba(vector)[0]
-        probability_map = {
-            CATEGORIES.get(int(class_id), str(class_id)): float(probability)
-            for class_id, probability in zip(model.classes_, probabilities)
-        }
-        confidence = probability_map.get(category, 0.0)
-    else:
-        confidence = 0.0
+        try:
+            probabilities = model.predict_proba(vector)[0]
+            probability_map = {
+                CATEGORIES.get(int(class_id), str(class_id)): float(prob)
+                for class_id, prob in zip(model.classes_, probabilities)
+            }
+            confidence = probability_map.get(category, 0.0)
+        except AttributeError as exc:
+            # Internal sklearn attribute missing — version mismatch between
+            # training and deployment environment.  Category is still valid.
+            import logging as _logging
+            _logging.getLogger(__name__).warning(
+                "predict_proba AttributeError (%s): confidence unavailable. "
+                "Check that scikit-learn in requirements.txt matches the "
+                "version used to train model.pkl.",
+                type(exc).__name__,
+            )
+        except Exception as exc:
+            import logging as _logging
+            _logging.getLogger(__name__).warning(
+                "predict_proba failed (%s): confidence unavailable.",
+                type(exc).__name__,
+            )
 
     return category, confidence, probability_map
 
