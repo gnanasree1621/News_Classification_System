@@ -3,13 +3,28 @@ from datetime import datetime, timezone
 from dotenv import load_dotenv
 import pymongo
 from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError, PyMongoError
+import streamlit as st
+from pymongo.errors import (
+    ConnectionFailure,
+    ServerSelectionTimeoutError,
+    PyMongoError,
+)
 
 load_dotenv()
 
-MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
-MONGODB_DB_NAME = os.getenv("MONGODB_DB", "news_classifier")
-COLLECTION_NAME = "predictions"
+# Read MongoDB settings from Streamlit Secrets when deployed.
+# Fall back to environment variables for local development.
+try:
+    MONGODB_URI = st.secrets["MONGODB_URI"]
+except (KeyError, FileNotFoundError):
+    MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
 
+try:
+    MONGODB_DB_NAME = st.secrets["MONGODB_DB"]
+except (KeyError, FileNotFoundError):
+    MONGODB_DB_NAME = os.getenv("MONGODB_DB", "news_classifier")
+
+COLLECTION_NAME = "predictions"
 
 def get_client(timeout_ms=3000):
     """
