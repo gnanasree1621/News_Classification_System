@@ -4,11 +4,6 @@ from dotenv import load_dotenv
 import pymongo
 from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError, PyMongoError
 import streamlit as st
-from pymongo.errors import (
-    ConnectionFailure,
-    ServerSelectionTimeoutError,
-    PyMongoError,
-)
 
 load_dotenv()
 
