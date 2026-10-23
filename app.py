@@ -480,8 +480,7 @@ if page == "🏠 Dashboard":
     latest_category = kpi_metrics["latest_category"]
     avg_confidence = kpi_metrics["avg_confidence"]
 
-    if not db_connected:
-        st.warning("⚠️ MongoDB connection unavailable. Please make sure MongoDB is running on localhost:27017.")
+    
 
     st.markdown(
         """
@@ -704,9 +703,8 @@ elif page == "📊 Analytics":
 
     success, db_docs = db.get_predictions()
 
-    if not success:
-        st.error("⚠️ MongoDB connection unavailable. Please make sure MongoDB is running.")
-    elif not db_docs:
+   
+    if not db_docs:
         st.info("Analyze some news articles first to generate analytics.")
     else:
         analytics_data = [
@@ -781,9 +779,7 @@ elif page == "📜 History":
 
     success, db_docs = db.get_predictions()
 
-    if not success:
-        st.error("⚠️ MongoDB connection unavailable. Please make sure MongoDB is running.")
-    elif not db_docs:
+    if not db_docs:
         st.info("No predictions yet. Use Analyze News to create your first prediction.")
     else:
         history_rows = [
